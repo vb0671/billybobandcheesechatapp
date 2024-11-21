@@ -1,0 +1,63 @@
+/* General page styles */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f4f4f4;
+}
+
+/* Container styles for the whole app */
+#usernameSection, #homeScreen, #joinRoomSection, #chatRoom {
+    width: 300px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Input and button styling */
+input, button {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+/* Button hover effect */
+button:hover {
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+/* Specific button styles */
+button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    font-weight: bold;
+}
+
+/* Hide sections when not active */
+#usernameSection, #homeScreen, #joinRoomSection, #chatRoom {
+    display: none;
+}
+
+/* Show active sections */
+#usernameSection {
+    display: block;
+}
+
+/* Chat area size and scrollable area */
+#messages {
+    max-height: 300px;
+    width: 100%;
+    margin-bottom: 10px;
+    overflow-y: auto;
+}
