@@ -1,198 +1,192 @@
-// Firebase configuration (same as before)
-const firebaseConfig = {
-    apiKey: "AIzaSyACLgHwfVw9aZ_IkAkBNGUhACr6L976ovU",
-    authDomain: "webrtcandfirebase-0671.firebaseapp.com",
-    databaseURL: "https://webrtcandfirebase-0671-default-rtdb.firebaseio.com/",
-    projectId: "webrtcandfirebase-0671",
-    storageBucket: "webrtcandfirebase-0671.firebasestorage.app",
-    messagingSenderId: "424159002904",
-    appId: "1:424159002904:web:d808aba82da00b8c965e6d",
-    measurementId: "G-VMS1YD4HW8"
-};
-
 // Initialize Firebase
-const app = firebase.initializeApp(firebaseConfig);
+const firebaseConfig = {
+  apiKey: "AIzaSyACLgHwfVw9aZ_IkAkBNGUhACr6L976ovU",
+  authDomain: "webrtcandfirebase-0671.firebaseapp.com",
+  projectId: "webrtcandfirebase-0671",
+  storageBucket: "webrtcandfirebase-0671.appspot.com",
+  messagingSenderId: "424159002904",
+  appId: "1:424159002904:web:d808aba82da00b8c965e6d",
+  measurementId: "G-VMS1YD4HW8"
+};
+firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
-let username = '';  // Declare username outside any function
-let currentRoom = null; // Current room code
+// UI elements
+const roomCodeInput = document.getElementById("roomCode");
+const messageInput = document.getElementById("messageInput");
+const sendButton = document.getElementById("sendButton");
+const joinButton = document.getElementById("joinButton");
+const createButton = document.getElementById("createButton");
+const usernameInput = document.getElementById("usernameInput");
+const setUsernameButton = document.getElementById("setUsernameButton");
+const chatWindow = document.getElementById("chatWindow");
+const backButton = document.getElementById("backButton");
 
-const INACTIVITY_LIMIT = 10 * 60 * 60 * 1000; // 10 hours in milliseconds
+// Event Listeners
+sendButton.addEventListener("click", sendMessage);
+messageInput.addEventListener("keydown", function(event) {
+  if (event.key === "Enter") {
+    sendMessage();
+  }
+});
+setUsernameButton.addEventListener("click", setUsername);
+createButton.addEventListener("click", createRoom);
+joinButton.addEventListener("click", joinRoom);
+backButton.addEventListener("click", goBack);
 
-// Ensure room '1' exists when the page is loaded
-window.onload = function() {
-    const room1Ref = firebase.database().ref('rooms/1');
-    room1Ref.once('value', snapshot => {
-        if (!snapshot.exists()) {
-            // Create room '1' with a placeholder message and permanent data
-            const roomData = {
-                lastActivity: Date.now(),
-                messages: {}
-            };
-            room1Ref.set(roomData);
-        }
-    });
-};
+let currentUsername = "";
 
 // Set username function
 function setUsername() {
-    const usernameInput = document.getElementById('usernameInput');
-    const name = usernameInput.value.trim();
-
-    if (!name) {
-        alert('Please enter a valid username.');
-        return;
-    }
-
-    // Check if the username already exists and if the user is active
-    const usernamesRef = firebase.database().ref('usernames');
-    usernamesRef.once('value', snapshot => {
-        let usernameTaken = false;
-        snapshot.forEach(childSnapshot => {
-            const existingUsername = childSnapshot.key;
-            const userStatus = childSnapshot.val().active;
-
-            // If username is taken and user is still active, prevent setting it
-            if (existingUsername === name && userStatus === true) {
-                usernameTaken = true;
-            }
-        });
-
-        if (usernameTaken) {
-            alert(`There is already a "${name}" using this file.`);
-        } else {
-            // Set the username and mark it as active
-            username = name;
-            usernamesRef.child(name).set({ active: true }); // Store username with active status
-            alert(`Username set to: ${username}`);
-            document.getElementById('usernameSection').style.display = 'none';
-            document.getElementById('homeScreen').style.display = 'block';
+  const username = usernameInput.value.trim();
+  if (username) {
+    const usernameRef = database.ref("usernames");
+    usernameRef.once("value", (snapshot) => {
+      let usernameTaken = false;
+      snapshot.forEach(function(childSnapshot) {
+        if (childSnapshot.val() === username) {
+          usernameTaken = true;
         }
+      });
+
+      if (usernameTaken) {
+        alert("This username is already taken. Please choose another one.");
+      } else {
+        currentUsername = username;
+        usernameRef.push(username);
+        alert("Username set successfully!");
+        showMainScreen();
+      }
     });
+  }
 }
 
-// Go back to home screen from the "join room" section
-function backToHome() {
-    document.getElementById('joinRoomSection').style.display = 'none';
-    document.getElementById('homeScreen').style.display = 'block';
-}
-
-// Create a new room
+// Create room function
 function createRoom() {
-    const roomCode = Math.floor(10000 + Math.random() * 90000).toString();
-    currentRoom = roomCode;
-    const newRoomRef = firebase.database().ref(`rooms/${roomCode}`);
-    const newRoomData = {
-        lastActivity: Date.now(),
-        messages: {}
-    };
-    newRoomRef.set(newRoomData);
-    alert(`Room created! Share this code: ${roomCode}`);
-    enterChatRoom();
+  const roomCode = generateRoomCode();
+  const roomRef = database.ref("rooms/" + roomCode);
+  
+  roomRef.set({
+    createdAt: Date.now(),
+    messages: []
+  });
+
+  alert("Room created with code: " + roomCode);
+  joinRoom(roomCode); // Automatically join the room after creating it
 }
 
-// Open the join room section
-function joinRoomSection() {
-    document.getElementById('homeScreen').style.display = 'none';
-    document.getElementById('joinRoomSection').style.display = 'block';
-}
-
-// Join an existing room
+// Join room function
 function joinRoom() {
-    const roomCode = document.getElementById('roomCode').value.trim();
-    if (!roomCode) {
-        alert('Please enter a valid room code.');
-        return;
+  const roomCode = roomCodeInput.value.trim();
+  if (roomCode === "") {
+    alert("Please enter a valid room code.");
+    return;
+  }
+
+  const roomRef = database.ref("rooms/" + roomCode);
+  roomRef.once("value", function(snapshot) {
+    if (snapshot.exists()) {
+      displayMessages(roomCode);
+      showChatScreen();
+    } else {
+      alert("Room does not exist.");
     }
-
-    // Check if the room exists in the database
-    const roomRef = firebase.database().ref(`rooms/${roomCode}`);
-    roomRef.once('value', (snapshot) => {
-        if (snapshot.exists()) {
-            // Check if it's room '1' (permanent room)
-            if (roomCode === '1') {
-                currentRoom = '1';
-                enterChatRoom();
-            } else {
-                // Check if the room is inactive for 10 hours
-                const roomData = snapshot.val();
-                const currentTime = Date.now();
-                if (currentTime - roomData.lastActivity > INACTIVITY_LIMIT) {
-                    alert('This room has been deleted due to inactivity.');
-                } else {
-                    currentRoom = roomCode;
-                    enterChatRoom();
-                }
-            }
-        } else {
-            alert('Room does not exist.');
-        }
-    });
+  });
 }
 
-// Enter the chat room
-function enterChatRoom() {
-    document.getElementById('homeScreen').style.display = 'none';
-    document.getElementById('joinRoomSection').style.display = 'none';
-    document.getElementById('chatRoom').style.display = 'block';
-    document.getElementById('currentRoomCode').textContent = currentRoom;
-
-    // Listen for messages in the current room
-    const messagesRef = firebase.database().ref(`rooms/${currentRoom}/messages`);
-    messagesRef.on('value', (snapshot) => {
-        const messages = snapshot.val();
-        const messagesDiv = document.getElementById('messages');
-        messagesDiv.innerHTML = ''; // Clear current messages
-
-        if (messages) {
-            Object.values(messages).forEach((message) => {
-                const messageDiv = document.createElement('div');
-                messageDiv.textContent = `${message.sender}: ${message.text}`;
-                messagesDiv.appendChild(messageDiv);
-            });
-        }
-    });
-
-    // Update the last activity time in the database to prevent room deletion
-    const roomRef = firebase.database().ref(`rooms/${currentRoom}`);
-    roomRef.update({
-        lastActivity: Date.now()
-    });
+// Show the main screen
+function showMainScreen() {
+  document.getElementById("mainScreen").style.display = "block";
+  document.getElementById("setUsernameScreen").style.display = "none";
+  document.getElementById("chatScreen").style.display = "none";
 }
 
-// Send a message
+// Show the chat screen
+function showChatScreen() {
+  document.getElementById("mainScreen").style.display = "none";
+  document.getElementById("setUsernameScreen").style.display = "none";
+  document.getElementById("chatScreen").style.display = "block";
+}
+
+// Go back to the main screen
+function goBack() {
+  showMainScreen();
+}
+
+// Generate a random room code
+function generateRoomCode() {
+  return Math.floor(10000 + Math.random() * 90000); // Generate a 5-digit room code
+}
+
+// Display messages in the chat window
+function displayMessages(roomCode) {
+  chatWindow.innerHTML = ''; // Clear the previous messages
+
+  const roomMessagesRef = database.ref("rooms/" + roomCode + "/messages");
+  roomMessagesRef.on("child_added", (data) => {
+    const messageData = data.val();
+    const messageElement = document.createElement("div");
+    messageElement.classList.add("message");
+
+    // Username element with bold text
+    const usernameElement = document.createElement("strong");
+    usernameElement.textContent = messageData.username;
+
+    // Timestamp element (EST time zone)
+    const timestampElement = document.createElement("small");
+    timestampElement.textContent = new Date(messageData.timestamp).toLocaleString("en-US", { timeZone: "America/New_York" });
+
+    // Message content
+    const messageContent = document.createElement("p");
+    messageContent.textContent = messageData.message;
+
+    // Add username, timestamp, and message content to the message element
+    messageElement.appendChild(usernameElement);
+    messageElement.appendChild(timestampElement);
+    messageElement.appendChild(messageContent);
+
+    // Add a tiny space between messages
+    const spaceElement = document.createElement("div");
+    spaceElement.classList.add("message-space");
+
+    // Append the message and space to the chat window
+    chatWindow.appendChild(messageElement);
+    chatWindow.appendChild(spaceElement);
+
+    // Scroll to the latest message
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  });
+}
+
+// Send a message function
 function sendMessage() {
-    const messageInput = document.getElementById('messageInput');
-    const messageText = messageInput.value.trim();
-    if (!messageText) {
-        alert('Please enter a message.');
-        return;
-    }
+  const roomCode = roomCodeInput.value.trim();
+  const message = messageInput.value.trim();
+  
+  if (message && roomCode && currentUsername) {
+    const messageRef = database.ref("rooms/" + roomCode + "/messages");
+    const newMessageRef = messageRef.push();
 
-    const messagesRef = firebase.database().ref(`rooms/${currentRoom}/messages`);
-    const newMessage = {
-        sender: username,
-        text: messageText,
-        timestamp: Date.now()
-    };
-
-    messagesRef.push(newMessage);
-    messageInput.value = ''; // Clear input
-
-    // Update last activity for the room
-    const roomRef = firebase.database().ref(`rooms/${currentRoom}`);
-    roomRef.update({
-        lastActivity: Date.now()
+    newMessageRef.set({
+      username: currentUsername,
+      message: message,
+      timestamp: Date.now()
     });
+
+    messageInput.value = ''; // Clear the message input field
+  }
 }
 
-// Leave the chat room
-function leaveRoom() {
-    currentRoom = null;
-    document.getElementById('chatRoom').style.display = 'none';
-    document.getElementById('homeScreen').style.display = 'block';
-
-    // Mark the username as inactive
-    const usernamesRef = firebase.database().ref('usernames');
-    usernamesRef.child(username).update({ active: false });
-}
+// Remove username from Firebase when the tab is closed
+window.onbeforeunload = function() {
+  if (currentUsername) {
+    const usernameRef = database.ref("usernames");
+    usernameRef.once("value", function(snapshot) {
+      snapshot.forEach(function(childSnapshot) {
+        if (childSnapshot.val() === currentUsername) {
+          childSnapshot.ref.remove();
+        }
+      });
+    });
+  }
+};

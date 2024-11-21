@@ -1,63 +1,94 @@
-/* General page styles */
+/* Global Dark Mode Style */
 body {
+    background-color: #121212;
+    color: #e0e0e0;
     font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    margin: 0;
-    background-color: #f4f4f4;
 }
 
-/* Container styles for the whole app */
-#usernameSection, #homeScreen, #joinRoomSection, #chatRoom {
-    width: 300px;
-    padding: 20px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+/* Home Screen, Join Room, Chat Room Section */
+#homeScreen, #joinRoomSection, #chatRoom {
     display: flex;
     flex-direction: column;
+    justify-content: center;
     align-items: center;
-}
-
-/* Input and button styling */
-input, button {
     width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 4px;
-    border: 1px solid #ddd;
+    max-width: 800px;
+    padding: 20px;
 }
 
-/* Button hover effect */
-button:hover {
-    background-color: #f0f0f0;
-    cursor: pointer;
+/* Chat Room */
+#chatRoom {
+    background-color: #1e1e1e;
+    border-radius: 10px;
+    padding: 20px;
+    max-height: 70vh;
+    width: 100%;
+    overflow-y: auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
 }
 
-/* Specific button styles */
-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
+/* Text Messages Area */
+#messages {
+    margin-bottom: 10px;
+    overflow-y: auto;
+}
+
+.message {
+    margin-bottom: 15px;
+}
+
+.message-text {
+    font-size: 16px;
+}
+
+.username {
     font-weight: bold;
 }
 
-/* Hide sections when not active */
-#usernameSection, #homeScreen, #joinRoomSection, #chatRoom {
-    display: none;
+.timestamp {
+    font-size: 12px;
+    color: #aaa;
 }
 
-/* Show active sections */
-#usernameSection {
-    display: block;
+/* Form Inputs and Buttons */
+#messageInput {
+    width: 75%;
+    padding: 10px;
+    font-size: 14px;
+    background-color: #333;
+    border: 1px solid #444;
+    border-radius: 5px;
+    color: #fff;
 }
 
-/* Chat area size and scrollable area */
-#messages {
-    max-height: 300px;
-    width: 100%;
+#sendMessageBtn, #leaveRoomBtn {
+    width: 20%;
+    padding: 10px;
+    background-color: #6200ea;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+#sendMessageBtn:hover, #leaveRoomBtn:hover {
+    background-color: #3700b3;
+}
+
+/* Username Input Style */
+#usernameInput {
+    width: 200px;
+    padding: 10px;
     margin-bottom: 10px;
-    overflow-y: auto;
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 5px;
 }
