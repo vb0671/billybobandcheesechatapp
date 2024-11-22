@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get More Math!</title>
+  <link rel="icon" href="https://i.ibb.co/YT6qGW8/favicon.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/9.19.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.19.0/firebase-database-compat.js"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <header>Chat App</header>
+    <main>
+      <!-- Username Screen -->
+      <div id="usernameScreen">
+        <h2>Set Your Username</h2>
+        <input id="usernameInput" type="text" placeholder="Enter username" maxlength="20">
+        <button id="setUsernameButton" onclick="setUsername()">Set Username</button>
+        <p class="error" id="usernameError"></p>
+      </div>
+
+      <!-- Main Screen -->
+      <div id="mainScreen" style="display: none;">
+        <h2>Welcome!</h2>
+        <button id="joinRoomButton" onclick="promptJoinRoom()">Join a Room</button>
+        <button id="createRoomButton" onclick="createRoom()">Create a Room</button>
+        <button onclick="goToGames()">Games</button>
+      </div>
+
+      <!-- Chat Screen -->
+      <div id="chatScreen" style="display: none;">
+        <div id="chatHeader">
+          <h2>Chat Room: <span id="roomCode"></span></h2>
+          <button id="leaveRoomButton" onclick="leaveRoom()">Leave Room</button>
+        </div>
+        <div id="chatWindow"></div>
+        <div id="chatControls">
+          <input id="messageInput" type="text" placeholder="Type a message..." maxlength="85" onkeypress="handleEnter(event)">
+          <button id="sendMessageButton" onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
