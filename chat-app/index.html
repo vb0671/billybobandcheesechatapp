@@ -1,200 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get More Math!</title>
-    <link rel="icon" href="https://i.ibb.co/YT6qGW8/favicon.png" type="image/png">
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get More Math!</title>
+  <link rel="icon" href="https://i.ibb.co/YT6qGW8/favicon.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/9.19.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.19.0/firebase-database-compat.js"></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
-    <!-- Set Username Screen -->
-    <div id="setUsernameScreen">
+  <div class="container">
+    <header>Chat App</header>
+    <main>
+      <!-- Username Screen -->
+      <div id="usernameScreen">
         <h2>Set Your Username</h2>
-        <input type="text" id="usernameInput" placeholder="Enter your username" />
-        <button onclick="setUsername()">Set Username</button>
-    </div>
+        <input id="usernameInput" type="text" placeholder="Enter username" maxlength="20">
+        <button id="setUsernameButton" onclick="setUsername()">Set Username</button>
+        <p class="error" id="usernameError"></p>
+      </div>
 
-    <!-- Home Screen (after setting username) -->
-    <div id="homeScreen" style="display:none;">
-        <h2>Welcome to the Chat App!</h2>
-        <div>
-            <input type="text" id="roomCode" placeholder="Enter room code" />
-            <button onclick="joinRoom()">Join Room</button>
+      <!-- Main Screen -->
+      <div id="mainScreen" style="display: none;">
+        <h2>Welcome!</h2>
+        <button id="joinRoomButton" onclick="promptJoinRoom()">Join a Room</button>
+        <button id="createRoomButton" onclick="createRoom()">Create a Room</button>
+      </div>
+
+      <!-- Chat Screen -->
+      <div id="chatScreen" style="display: none;">
+        <div id="chatHeader">
+          <h2>Chat Room: <span id="roomCode"></span></h2>
+          <button id="leaveRoomButton" onclick="leaveRoom()">Leave Room</button>
         </div>
-        <div>
-            <button onclick="createRoom()">Create Room</button>
+        <div id="chatWindow"></div>
+        <div id="chatControls">
+          <input id="messageInput" type="text" placeholder="Type a message..." maxlength="85" onkeypress="handleEnter(event)">
+          <button id="sendMessageButton" onclick="sendMessage()">Send</button>
         </div>
-    </div>
-
-    <!-- Chat Room Screen -->
-    <div id="chatRoom" style="display:none;">
-        <h2>Chat Room - Room Code: <span id="currentRoomCode"></span></h2>
-        <div id="messages" style="max-height: 400px; overflow-y: auto;"></div>
-        <div style="display: flex; align-items: center;">
-            <input type="text" id="messageInput" placeholder="Enter message" maxlength="85" style="flex: 1;"/>
-            <button onclick="sendMessage()">Send Message</button>
-        </div>
-        <div>
-            <button onclick="leaveRoom()">Leave Room</button>
-        </div>
-    </div>
-
-    <!-- Firebase SDKs -->
-    <script type="module">
-        // Import Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-app.js";
-        import { getDatabase, ref, set, get, child, onValue, push } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-database.js";
-
-        // Firebase config
-        const firebaseConfig = {
-            apiKey: "AIzaSyACLgHwfVw9aZ_IkAkBNGUhACr6L976ovU",
-            authDomain: "webrtcandfirebase-0671.firebaseapp.com",
-            projectId: "webrtcandfirebase-0671",
-            storageBucket: "webrtcandfirebase-0671.firebasestorage.app",
-            messagingSenderId: "424159002904",
-            appId: "1:424159002904:web:d808aba82da00b8c965e6d",
-            measurementId: "G-VMS1YD4HW8"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-
-        let currentRoom = null;
-        let currentUsername = null;
-
-        // Set Username
-        window.setUsername = function() {
-            const username = document.getElementById('usernameInput').value.trim();
-            if (username !== "") {
-                const userRef = ref(database, "usernames/" + username);
-                get(userRef).then((snapshot) => {
-                    if (snapshot.exists()) {
-                        alert("Username already taken. Please choose another.");
-                    } else {
-                        set(userRef, { username: username }).then(() => {
-                            currentUsername = username;
-                            alert("Username set successfully!");
-                            document.getElementById('setUsernameScreen').style.display = 'none';
-                            document.getElementById('homeScreen').style.display = 'block';
-                        }).catch((error) => {
-                            console.error("Error setting username in Firebase:", error);
-                            alert("Error setting username.");
-                        });
-                    }
-                }).catch((error) => {
-                    console.error("Error checking username in Firebase:", error);
-                });
-            } else {
-                alert("Please enter a valid username.");
-            }
-        };
-
-        // Create Room
-        window.createRoom = function() {
-            const roomRef = ref(database, 'rooms');
-            const newRoomCode = Math.floor(10000 + Math.random() * 90000);  // Generate 5-digit room code
-            const newRoomRef = ref(database, 'rooms/' + newRoomCode);
-
-            // Set the room data (you can expand this with more data if needed)
-            set(newRoomRef, {
-                host: currentUsername,
-                messages: []
-            }).then(() => {
-                alert("Room created successfully!");
-                document.getElementById('homeScreen').style.display = 'none';
-                document.getElementById('chatRoom').style.display = 'block';
-                document.getElementById('currentRoomCode').innerText = newRoomCode;
-                currentRoom = newRoomCode;
-                listenForMessages(newRoomCode);
-            }).catch((error) => {
-                console.error("Error creating room in Firebase:", error);
-                alert("Error creating room.");
-            });
-        };
-
-        // Join Room
-        window.joinRoom = function() {
-            const roomCode = document.getElementById('roomCode').value.trim();
-            if (roomCode === "1") {
-                // Join public room (Room code 1 is special)
-                alert("Joined public room!");
-                document.getElementById('homeScreen').style.display = 'none';
-                document.getElementById('chatRoom').style.display = 'block';
-                document.getElementById('currentRoomCode').innerText = "1";
-                currentRoom = "1"; // Public room code
-                listenForMessages("1");
-            } else {
-                const roomRef = ref(database, 'rooms/' + roomCode);
-                get(roomRef).then((snapshot) => {
-                    if (snapshot.exists()) {
-                        alert("Room joined successfully!");
-                        document.getElementById('homeScreen').style.display = 'none';
-                        document.getElementById('chatRoom').style.display = 'block';
-                        document.getElementById('currentRoomCode').innerText = roomCode;
-                        currentRoom = roomCode;
-                        listenForMessages(roomCode);
-                    } else {
-                        alert("Room does not exist.");
-                    }
-                }).catch((error) => {
-                    console.error("Error checking room in Firebase:", error);
-                    alert("Error joining room.");
-                });
-            }
-        };
-
-        // Send Message
-        window.sendMessage = function() {
-            const message = document.getElementById('messageInput').value.trim();
-            if (message !== "") {
-                const messagesRef = ref(database, 'rooms/' + currentRoom + '/messages');
-                const newMessageRef = push(messagesRef);
-                set(newMessageRef, {
-                    username: currentUsername,
-                    message: message,
-                    timestamp: new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
-                }).then(() => {
-                    document.getElementById('messageInput').value = ""; // Clear the input box
-                }).catch((error) => {
-                    console.error("Error sending message:", error);
-                });
-            }
-        };
-
-        // Listen for Messages
-        function listenForMessages(roomCode) {
-            const messagesRef = ref(database, 'rooms/' + roomCode + '/messages');
-            onValue(messagesRef, (snapshot) => {
-                const messagesContainer = document.getElementById('messages');
-                messagesContainer.innerHTML = '';  // Clear the current messages
-                snapshot.forEach((childSnapshot) => {
-                    const message = childSnapshot.val();
-                    const messageElement = document.createElement('div');
-                    messageElement.innerHTML = `<strong>${message.username}:</strong> ${message.message} <small>(${message.timestamp})</small>`;
-                    messagesContainer.appendChild(messageElement);
-                });
-                messagesContainer.scrollTop = messagesContainer.scrollHeight; // Auto scroll to bottom
-            });
-        }
-
-        // Leave Room
-        window.leaveRoom = function() {
-            document.getElementById('chatRoom').style.display = 'none';
-            document.getElementById('homeScreen').style.display = 'block';
-            currentRoom = null;
-            document.getElementById('roomCode').value = "";
-        };
-
-        // Send message when pressing Enter key
-        document.getElementById('messageInput').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
-        });
-    </script>
-
-    <script src="app.js"></script>
+      </div>
+    </main>
+  </div>
 </body>
 </html>

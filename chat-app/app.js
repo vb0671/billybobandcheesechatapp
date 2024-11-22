@@ -1,192 +1,115 @@
-// Initialize Firebase
+// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyACLgHwfVw9aZ_IkAkBNGUhACr6L976ovU",
   authDomain: "webrtcandfirebase-0671.firebaseapp.com",
+  databaseURL: "https://webrtcandfirebase-0671-default-rtdb.firebaseio.com",
   projectId: "webrtcandfirebase-0671",
   storageBucket: "webrtcandfirebase-0671.appspot.com",
   messagingSenderId: "424159002904",
   appId: "1:424159002904:web:d808aba82da00b8c965e6d",
-  measurementId: "G-VMS1YD4HW8"
+  measurementId: "G-VMS1YD4HW8",
 };
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
 
-// UI elements
-const roomCodeInput = document.getElementById("roomCode");
-const messageInput = document.getElementById("messageInput");
-const sendButton = document.getElementById("sendButton");
-const joinButton = document.getElementById("joinButton");
-const createButton = document.getElementById("createButton");
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database(app);
+
+// DOM Elements
+const usernameScreen = document.getElementById("usernameScreen");
+const mainScreen = document.getElementById("mainScreen");
+const chatScreen = document.getElementById("chatScreen");
 const usernameInput = document.getElementById("usernameInput");
-const setUsernameButton = document.getElementById("setUsernameButton");
+const messageInput = document.getElementById("messageInput");
 const chatWindow = document.getElementById("chatWindow");
-const backButton = document.getElementById("backButton");
+const chatHeader = document.getElementById("chatHeader");
+const leaveRoomButton = document.getElementById("leaveRoomButton");
 
-// Event Listeners
-sendButton.addEventListener("click", sendMessage);
-messageInput.addEventListener("keydown", function(event) {
-  if (event.key === "Enter") {
-    sendMessage();
-  }
-});
-setUsernameButton.addEventListener("click", setUsername);
-createButton.addEventListener("click", createRoom);
-joinButton.addEventListener("click", joinRoom);
-backButton.addEventListener("click", goBack);
+let username = null;
+let currentRoom = null;
 
-let currentUsername = "";
-
-// Set username function
-function setUsername() {
-  const username = usernameInput.value.trim();
-  if (username) {
-    const usernameRef = database.ref("usernames");
-    usernameRef.once("value", (snapshot) => {
-      let usernameTaken = false;
-      snapshot.forEach(function(childSnapshot) {
-        if (childSnapshot.val() === username) {
-          usernameTaken = true;
-        }
-      });
-
-      if (usernameTaken) {
-        alert("This username is already taken. Please choose another one.");
-      } else {
-        currentUsername = username;
-        usernameRef.push(username);
-        alert("Username set successfully!");
-        showMainScreen();
-      }
-    });
-  }
-}
-
-// Create room function
-function createRoom() {
-  const roomCode = generateRoomCode();
-  const roomRef = database.ref("rooms/" + roomCode);
-  
-  roomRef.set({
-    createdAt: Date.now(),
-    messages: []
-  });
-
-  alert("Room created with code: " + roomCode);
-  joinRoom(roomCode); // Automatically join the room after creating it
-}
-
-// Join room function
-function joinRoom() {
-  const roomCode = roomCodeInput.value.trim();
-  if (roomCode === "") {
-    alert("Please enter a valid room code.");
+// Set Username
+async function setUsername() {
+  const input = usernameInput.value.trim();
+  if (!input) {
+    alert("Please enter a username!");
     return;
   }
 
-  const roomRef = database.ref("rooms/" + roomCode);
-  roomRef.once("value", function(snapshot) {
-    if (snapshot.exists()) {
-      displayMessages(roomCode);
-      showChatScreen();
-    } else {
-      alert("Room does not exist.");
-    }
-  });
+  const usernamesRef = db.ref("usernames");
+  const snapshot = await usernamesRef.child(input).get();
+
+  if (snapshot.exists()) {
+    alert("Username is already taken!");
+    return;
+  }
+
+  await usernamesRef.child(input).set(true);
+  username = input;
+  usernameScreen.style.display = "none";
+  mainScreen.style.display = "block";
 }
 
-// Show the main screen
-function showMainScreen() {
-  document.getElementById("mainScreen").style.display = "block";
-  document.getElementById("setUsernameScreen").style.display = "none";
-  document.getElementById("chatScreen").style.display = "none";
+// Prompt to Join Room
+async function promptJoinRoom() {
+  const roomCode = prompt("Enter room code:");
+  if (!roomCode) return;
+  joinRoom(roomCode);
 }
 
-// Show the chat screen
-function showChatScreen() {
-  document.getElementById("mainScreen").style.display = "none";
-  document.getElementById("setUsernameScreen").style.display = "none";
-  document.getElementById("chatScreen").style.display = "block";
+// Create Room
+function createRoom() {
+  const roomCode = Math.floor(Math.random() * 100000).toString();
+  joinRoom(roomCode);
+  alert(`Room created! Share this code: ${roomCode}`);
 }
 
-// Go back to the main screen
-function goBack() {
-  showMainScreen();
-}
+// Join Room
+function joinRoom(roomCode) {
+  currentRoom = roomCode;
+  mainScreen.style.display = "none";
+  chatScreen.style.display = "block";
+  chatWindow.innerHTML = "";
+  document.getElementById("roomCode").textContent = currentRoom;  // Dynamically set room code
 
-// Generate a random room code
-function generateRoomCode() {
-  return Math.floor(10000 + Math.random() * 90000); // Generate a 5-digit room code
-}
+  const roomRef = db.ref(`rooms/${roomCode}/messages`);
+  roomRef.on("child_added", (snapshot) => {
+    const data = snapshot.val();
+    const message = document.createElement("div");
+    message.className = "chatMessage";
+    const timestamp = new Date(data.timestamp).toLocaleString("en-US", { timeZone: "America/New_York" });
 
-// Display messages in the chat window
-function displayMessages(roomCode) {
-  chatWindow.innerHTML = ''; // Clear the previous messages
-
-  const roomMessagesRef = database.ref("rooms/" + roomCode + "/messages");
-  roomMessagesRef.on("child_added", (data) => {
-    const messageData = data.val();
-    const messageElement = document.createElement("div");
-    messageElement.classList.add("message");
-
-    // Username element with bold text
-    const usernameElement = document.createElement("strong");
-    usernameElement.textContent = messageData.username;
-
-    // Timestamp element (EST time zone)
-    const timestampElement = document.createElement("small");
-    timestampElement.textContent = new Date(messageData.timestamp).toLocaleString("en-US", { timeZone: "America/New_York" });
-
-    // Message content
-    const messageContent = document.createElement("p");
-    messageContent.textContent = messageData.message;
-
-    // Add username, timestamp, and message content to the message element
-    messageElement.appendChild(usernameElement);
-    messageElement.appendChild(timestampElement);
-    messageElement.appendChild(messageContent);
-
-    // Add a tiny space between messages
-    const spaceElement = document.createElement("div");
-    spaceElement.classList.add("message-space");
-
-    // Append the message and space to the chat window
-    chatWindow.appendChild(messageElement);
-    chatWindow.appendChild(spaceElement);
-
-    // Scroll to the latest message
+    message.innerHTML = `
+      <strong>${data.username}</strong>: ${data.text}
+      <br>
+      <span class="timestamp">${timestamp}</span>
+    `;
+    chatWindow.appendChild(message);
     chatWindow.scrollTop = chatWindow.scrollHeight;
   });
 }
 
-// Send a message function
-function sendMessage() {
-  const roomCode = roomCodeInput.value.trim();
-  const message = messageInput.value.trim();
-  
-  if (message && roomCode && currentUsername) {
-    const messageRef = database.ref("rooms/" + roomCode + "/messages");
-    const newMessageRef = messageRef.push();
-
-    newMessageRef.set({
-      username: currentUsername,
-      message: message,
-      timestamp: Date.now()
-    });
-
-    messageInput.value = ''; // Clear the message input field
+// Handle Enter key press
+function handleEnter(event) {
+  if (event.key === "Enter") {
+    sendMessage();
   }
 }
 
-// Remove username from Firebase when the tab is closed
-window.onbeforeunload = function() {
-  if (currentUsername) {
-    const usernameRef = database.ref("usernames");
-    usernameRef.once("value", function(snapshot) {
-      snapshot.forEach(function(childSnapshot) {
-        if (childSnapshot.val() === currentUsername) {
-          childSnapshot.ref.remove();
-        }
-      });
-    });
+// Send Message
+function sendMessage() {
+  const text = messageInput.value.trim();
+  if (!text) return;
+  const timestamp = new Date().toISOString();
+  db.ref(`rooms/${currentRoom}/messages`).push({ username, text, timestamp });
+  messageInput.value = "";
+}
+
+// Leave Room
+function leaveRoom() {
+  if (currentRoom) {
+    db.ref(`rooms/${currentRoom}/messages`).off();
+    mainScreen.style.display = "block";
+    chatScreen.style.display = "none";
+    currentRoom = null;
   }
-};
+}

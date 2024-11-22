@@ -1,94 +1,139 @@
-/* Global Dark Mode Style */
+/* Reset */
+body, h2, p, input, button {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
 body {
-    background-color: #121212;
-    color: #e0e0e0;
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+  background-color: #121212;
+  color: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
 }
 
-/* Home Screen, Join Room, Chat Room Section */
-#homeScreen, #joinRoomSection, #chatRoom {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    max-width: 800px;
-    padding: 20px;
+.container {
+  width: 100%;
+  max-width: 600px;
+  padding: 20px;
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
 }
 
-/* Chat Room */
-#chatRoom {
-    background-color: #1e1e1e;
-    border-radius: 10px;
-    padding: 20px;
-    max-height: 70vh;
-    width: 100%;
-    overflow-y: auto;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+header {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
 }
 
-/* Text Messages Area */
-#messages {
-    margin-bottom: 10px;
-    overflow-y: auto;
+h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
 }
 
-.message {
-    margin-bottom: 15px;
+input {
+  width: 80%;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 5px;
+  background-color: #2c2c2c;
+  color: #ffffff;
 }
 
-.message-text {
-    font-size: 16px;
+button {
+  padding: 10px 20px;
+  margin: 10px 5px;
+  background-color: #4caf50;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
-.username {
-    font-weight: bold;
+button:hover {
+  background-color: #45a049;
 }
 
-.timestamp {
-    font-size: 12px;
-    color: #aaa;
+.error {
+  color: red;
+  font-size: 14px;
 }
 
-/* Form Inputs and Buttons */
+/* Chat Screen */
+#chatHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#chatHeader h2 {
+  font-size: 20px;
+  font-weight: normal;
+  margin: 0;
+}
+
+#leaveRoomButton {
+  background-color: #f44336;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#leaveRoomButton:hover {
+  background-color: #e53935;
+}
+
+#chatWindow {
+  height: 400px;
+  overflow-y: auto;
+  border: 1px solid #333;
+  border-radius: 5px;
+  padding: 10px;
+  background-color: #2c2c2c;
+}
+
+#chatControls {
+  display: flex;
+  margin-top: 10px;
+}
+
 #messageInput {
-    width: 75%;
-    padding: 10px;
-    font-size: 14px;
-    background-color: #333;
-    border: 1px solid #444;
-    border-radius: 5px;
-    color: #fff;
+  flex: 1;
+  padding: 10px;
+  border-radius: 5px 0 0 5px;
 }
 
-#sendMessageBtn, #leaveRoomBtn {
-    width: 20%;
-    padding: 10px;
-    background-color: #6200ea;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-left: 10px;
+#sendMessageButton {
+  border-radius: 0 5px 5px 0;
 }
 
-#sendMessageBtn:hover, #leaveRoomBtn:hover {
-    background-color: #3700b3;
+/* Chat Messages */
+.chatMessage {
+  text-align: left; /* Align messages to the left */
+  margin: 5px 0; /* Add spacing between messages */
+  padding: 10px;
+  background-color: #2c2c2c;
+  border-radius: 5px;
+  word-wrap: break-word;
 }
 
-/* Username Input Style */
-#usernameInput {
-    width: 200px;
-    padding: 10px;
-    margin-bottom: 10px;
-    background-color: #333;
-    color: #fff;
-    border: 1px solid #444;
-    border-radius: 5px;
+.chatMessage strong {
+  font-weight: bold;
+  display: block; /* Display username on a separate line */
+}
+
+.chatMessage .timestamp {
+  font-size: 12px;
+  color: #aaa;
+  margin-top: 5px;
+  display: block; /* Ensure timestamps are below the message */
 }
